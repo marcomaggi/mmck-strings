@@ -853,7 +853,7 @@ the string operands must be in the @var{list-of-strings}.
 @chapter Copying strings
 
 
-@defun string-copy @var{dst.vec} @var{dst.start} @var{src.vec} @var{src.start} @var{src.end}
+@defun string-copy! @var{dst.vec} @var{dst.start} @var{src.vec} @var{src.start} @var{src.end}
 Copy elements from the string @var{src.vec} to the string @var{dst.vec}; return @var{dst.vec}
 itself.  The elements of @var{src.vec} from index @var{src.start} (included) to index @var{src.end}
 (excluded) are copied into @var{dst.vec} starting at index @var{dst.start}.
@@ -861,27 +861,27 @@ itself.  The elements of @var{src.vec} from index @var{src.start} (included) to 
 @lisp
 (let ((src.vec    '#(a b c d e))
       (dst.vec    (make-string 5 #f)))
-  (string-copy dst.vec 0
-               src.vec 0 (string-length src.vec)))
+  (string-copy! dst.vec 0
+                src.vec 0 (string-length src.vec)))
 @result{} #(a b c d e)
 
 (let ((src.vec    '#(a b c d e))
       (dst.vec    (make-string 5 #f)))
-  (string-copy dst.vec 0
-               src.vec 3 3))
+  (string-copy! dst.vec 0
+                src.vec 3 3))
 @result{} #(#f #f #f #f #f)
 
 (let ((src.vec    '#(a b c d e))
       (dst.vec    (make-string 5 #f)))
-  (string-copy dst.vec 1
-               src.vec 1 4))
+  (string-copy! dst.vec 1
+                src.vec 1 4))
 @result{} #(#f b c d #f)
 @end lisp
 @end defun
 
 
-@defun $string-copy @var{dst.vec} @var{dst.start} @var{src.vec} @var{src.start} @var{src.end}
-Like @func{string-copy}, but it does not validate its arguments.
+@defun $string-copy! @var{dst.vec} @var{dst.start} @var{src.vec} @var{src.start} @var{src.end}
+Like @func{string-copy!}, but it does not validate its arguments.
 @end defun
 
 @c page

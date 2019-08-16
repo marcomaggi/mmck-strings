@@ -105,8 +105,8 @@
      $string-find
 
      ;; copying
-     string-copy
-     $string-copy
+     string-copy!
+     $string-copy!
 
      ;; miscellaneous
      sorted-string-binary-search
@@ -879,7 +879,8 @@
 
 ;;;; copying
 
-(define* (string-copy dst.vec dst.start src.vec src.start src.end)
+(: string-copy! (string fixnum string fixnum fixnum -> string))
+(define* (string-copy! dst.vec dst.start src.vec src.start src.end)
   (begin-checks
     (assert-argument-type (__who__) "string"      string?      dst.vec     1)
     (assert-argument-type (__who__) "fixnum"      fixnum?      dst.start   2)
@@ -904,9 +905,9 @@
 	"invalid range in source string for selected range in destination string"
 	dst.vec dst.start src.vec src.start src.end))
     #| end of BEGIN-CHECKS |# )
-  ($string-copy dst.vec dst.start src.vec src.start src.end))
+  ($string-copy! dst.vec dst.start src.vec src.start src.end))
 
-(define ($string-copy dst.vec dst.start src.vec src.start src.end)
+(define ($string-copy! dst.vec dst.start src.vec src.start src.end)
   (do ((i dst.start (add1 i))
        (j src.start (add1 j)))
       ((= j src.end)
