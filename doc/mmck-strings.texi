@@ -1,0 +1,1088 @@
+\input texinfo.tex
+@c %**start of header
+@setfilename mmck-strings.info
+@settitle @sc{mmck} Strings
+@c %**end of header
+
+@include version.texi
+@include macros.texi
+
+@c page
+@c ------------------------------------------------------------
+@c Values.
+@c ------------------------------------------------------------
+
+@set TITLE                      Strings handling for @sc{chicken}
+
+@c To be used as @value{PACKAGE} whenever we need to include the full
+@c name of this package.
+@set PACKAGE                    @sc{mmck} Strings
+
+@c To be used as @value{PACKAGE} whenever we need to include the
+@c nickname of the project: the name that is used to compose the
+@c distribution tarball or the web address.
+@set PACKAGE_NICKNAME           mmck-strings
+
+@c To be used as @value{AUTHOR} whenever we need to include the list of
+@c authors of this document.
+@set AUTHOR                     Marco Maggi
+
+@c To be used as @value{AUTHOR_EMAIL} whenever we need to include the
+@c email of the *single* author of this document.
+@set AUTHOR_EMAIL               @email{mrc.mgg@@gmail.com}
+
+@c To be used as @value{COPYRIGHT_YEARS} whenever we need to include the
+@c list of copyright years.
+@set COPYRIGHT_YEARS            2019
+
+@set CHICKEN_VERSION            5.1.0
+
+@c ------------------------------------------------------------
+
+@set PackageStem                strings
+
+@set PackageAutoconfPrefix      MMCK_STRINGS
+@set PackagePkgconfigModule     mmck-strings
+
+@set GithubUrl                  @url{https://github.com/marcomaggi/@value{PACKAGE_NICKNAME}}
+@set BitbucketUrl               @url{https://bitbucket.org/marcomaggi/@value{PACKAGE_NICKNAME}}
+@set DownloadUrl                @url{https://bitbucket.org/marcomaggi/@value{PACKAGE_NICKNAME}/downloads}
+@set DocumentationUrl           @url{https://marcomaggi.github.io/docs/@value{PACKAGE_NICKNAME}.html}
+
+@c page
+@c ------------------------------------------------------------
+@c Local macros.
+@c ------------------------------------------------------------
+
+@macro mmck{}
+@sc{mmck}
+@end macro
+
+@macro chicken{}
+@sc{chicken}
+@end macro
+
+@c page
+@c ------------------------------------------------------------
+@c Copyright notice.
+@c ------------------------------------------------------------
+
+@copying
+This document describes version @value{VERSION} of @value{PACKAGE}, a @chicken{} language package
+implementing a strings handling library.  @chicken{} is a Scheme--to--C compiler supporting the
+language features as defined in the ``Revised^5 Report on Scheme''.
+
+The library supports @posix{} platforms.  This package has been tested with @chicken{} version
+@value{CHICKEN_VERSION}.
+
+This package is distributed under the terms of the @gnu{} Lesser General Public License (@lgpl{}).
+
+The latest release can be downloaded from:
+
+@center @value{DownloadUrl}
+
+@noindent
+development takes place at:
+
+@center @value{GithubUrl}
+
+@noindent
+and as backup at:
+
+@center @value{BitbucketUrl}
+
+@noindent
+Copyright @copyright{} @value{COPYRIGHT_YEARS} by @value{AUTHOR} @value{AUTHOR_EMAIL}
+
+@quotation
+Permission is granted to copy, distribute and/or modify this document under the terms of the @gnu{}
+Free Documentation License, Version 1.3 or any later version published by the Free Software
+Foundation; with Invariant Sections being ``@gnu{} Free Documentation License'' and ``@gnu{} Lesser
+General Public License'', no Front--Cover Texts, and no Back--Cover Texts.  A copy of the license is
+included in the section entitled ``@gnu{} Free Documentation License''.
+@end quotation
+@end copying
+
+@c page
+@c ------------------------------------------------------------
+@c Headers.
+@c ------------------------------------------------------------
+
+@titlepage
+@title @value{TITLE}
+@subtitle Revision @value{VERSION}
+@author @value{AUTHOR} @value{AUTHOR_EMAIL}
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@c ------------------------------------------------------------
+
+@ifinfo
+@dircategory Development
+@direntry
+* mmck-strings: (mmck-strings).     A strings handling library for @chicken{}.
+@end direntry
+@end ifinfo
+
+@c ------------------------------------------------------------
+
+@ignore
+@syncodeindex tp cp
+@syncodeindex vr cp
+@syncodeindex fn cp
+@end ignore
+
+@c page
+@ifnottex
+@node Top
+@top @value{TITLE}
+
+@insertcopying
+
+@menu
+* overview::                    Overview of the package.
+* version::                     Version functions.
+* unsafe::                      Unsafe operations on strings.
+* pred::                        String predicates.
+* fold::                        Folding strings.
+* map::                         Mapping strings.
+* search::                      Searching strings.
+* copy::                        Copying strings.
+* sort::                        Sorted strings.
+* conditions::                  Exceptional-condition object-types.
+
+Appendices
+
+* Package License::             GNU Lesser General Public License.
+* Documentation License::       GNU Free Documentation License.
+* references::                  Bibliography and references.
+
+Indexes
+
+* concept index::               An entry for each concept.
+* function index::              An entry for each function.
+* variable index::              An entry for each variable.
+* type index::                  An entry for each type.
+@end menu
+@end ifnottex
+
+@c page
+@node overview
+@chapter Overview of the package
+
+
+@cindex @library{mmck strings}, library
+@cindex Library @library{mmck strings}
+
+
+This document describes version @value{VERSION} of @value{PACKAGE}, a @chicken{} language package
+implementing a strings handling library.  @chicken{} is a Scheme-to-C compiler supporting the language
+features as defined in the ``Revised^5 Report on Scheme''.
+
+This package supports @posix{} platforms.  The package depends upon the @chicken{} eggs:
+@code{matchable}.  This package depends upon the external packages: @mmck{} Lang; @mmck{}
+Exceptional Conditions.  To run the tests distributed with the source code: this package depends
+upon the package @mmck{} Checks.
+
+The package installs the library @library{mmck strings} along with its import library.  To require
+the library and import its syntactic bindings in a module we can do:
+
+@example
+(declare (unit my-module)
+         (emit-import-library my-module))
+
+(require-library (mmck strings))
+
+(module (my-module)
+    ()
+  (import (scheme)
+          (mmck strings))
+
+  ...
+
+  #| end of module |# )
+@end example
+
+The core of the strings @api{} implemented by @value{PACKAGE} is inspired by that defined by
+@rnrs{6} for lists.
+
+@c page
+@node version
+@chapter Version functions
+
+
+@value{PACKAGE}'s version number follows the specification of @dfn{Semantic Versioning} version 2.0
+as outlined at:
+
+@center @url{https://semver.org/}
+
+@noindent
+the following functions are available to inspect the version specification at runtime.
+
+
+@defun mmck-@value{PackageStem}-package-major-version
+Return a fixnum representing the package's major version number.  As example, if the full semantic
+version is @samp{1.2.3-devel.0+x86-64}: the major version number is the fixnum @samp{1}.
+@end defun
+
+
+@defun mmck-@value{PackageStem}-package-minor-version
+Return a fixnum representing the package's minor version number.  As example, if the full semantic
+version is @samp{1.2.3-devel.0+x86-64}: the minor version number is the fixnum @samp{2}.
+@end defun
+
+
+@defun mmck-@value{PackageStem}-package-patch-level
+Return a fixnum representing the package's patch level number.  As example, if the full semantic
+version is @samp{1.2.3-devel.0+x86-64}: the patch level number is the fixnum @samp{3}.
+@end defun
+
+
+@defun mmck-@value{PackageStem}-package-prerelease-tag
+Return a string representing the package's prerelease tag.  As example, if the full semantic version
+is @samp{1.2.3-devel.0+x86-64}: the prerelease tag is the string @samp{"devel.0"}.  This string may
+be empty.
+@end defun
+
+
+@defun mmck-@value{PackageStem}-package-build-metadata
+Return a string representing the package's build metadata.  As example, if the full semantic version
+is @samp{1.2.3-devel.0+x86-64}: the build metadata is the string @samp{"x86-64"}.  This string may
+be empty.  We need to remember that this specification segment must contain only @ascii{}
+alphanumerics and hyphen @samp{[0-9A-Za-z-]}; underscores are @strong{not} allowed.
+@end defun
+
+
+@defun mmck-@value{PackageStem}-package-version
+Return a string representing the package's version.  As example, if the full semantic version is
+@samp{1.2.3-devel.0+x86-64}: the package version is the string @samp{"1.2.3-devel.0"}, without the
+build metadata.
+@end defun
+
+
+@defun mmck-@value{PackageStem}-package-semantic-version
+Return a string representing the package's semantic version.  As example, if the full semantic
+version is @samp{1.2.3-devel.0+x86-64}: the package version is the string
+@samp{"v1.2.3-devel.0+x86-64"}, notice the leading character @samp{v}.
+@end defun
+
+@c page
+@node unsafe
+@chapter Unsafe operations on strings
+
+
+@deffn {Unsafe Operation} $string-length @var{str}
+The argument @var{str} must be a string object.  Return a non--negative fixnum representing the
+length of the string @var{str}.
+@end deffn
+
+@c page
+@node pred
+@chapter String predicates
+
+
+@defun string-empty? @var{obj}
+Return @true{} if @var{obj} is a string object and it is empty (that is: of zero length); otherwise
+return @false{}.
+@end defun
+
+
+@defun string-not-empty? @var{obj}
+Return @true{} if @var{obj} is a string object and it is not empty (that is: of length greater than
+zero); otherwise return @false{}.
+@end defun
+
+
+@defun list-of-strings? @var{obj}
+Return @true{} if @var{obj} is a (possibly empty) list of (possibly empty) strings; otherwise return
+@false{}.  Notice that this function returns null if @var{obj} is neither null nor a proper list of
+strings.
+@end defun
+
+
+@defun list-of-strings-of-equal-length? @var{obj}
+Return @true{} if @var{obj} is a (possibly empty) list of (possibly empty) strings of equal length;
+otherwise return @false{}.  Notice that this function returns @false{} if @var{obj} is neither null
+nor a proper list of strings.
+@end defun
+
+
+@defun strings-of-equal-length? @varo{obj} @var{obj} @dots{}
+Return @true{} if all the arguments are (possibly empty) strings of equal length; otherwise return
+@false{}.  Notice that this function returns @false{} if one of the arguments is not a string.
+@end defun
+
+@c page
+@node fold
+@chapter Folding strings
+
+
+@defun string-fold-left @var{combine} @var{nil} @vari{string} @varii{string} @dots{} @varn{string}
+The @var{string}s must all have the same length.  @var{combine} must be a procedure; it must accept
+one more argument than there are @var{string}s and return a single value; it must not mutate the
+@var{string} arguments.
+
+The @func{string-fold-left} procedure iterates the @var{combine} procedure over an accumulator value
+and the elements of the @var{string}s from left to right, starting with an accumulator value of
+@var{nil}.  @var{combine} must have signature:
+
+@lisp
+(lambda (nil item0 item ...) . @meta{body})
+@end lisp
+
+More specifically, @func{string-fold-left} returns @var{nil} if the @var{string}s are empty.  If
+they are not empty, @var{combine} is first applied to @var{nil} and the respective first elements of
+the @var{string}s in order.  The result becomes the new accumulator value, and @var{combine} is
+applied to the new accumulator value and the respective next elements of the @var{string}.  This
+step is repeated until the end of the string is reached; then the accumulator value is returned.
+
+@var{combine} is always called in the same dynamic environment as @func{string-fold-left} itself.
+
+@lisp
+(string-fold-left
+    (lambda (knil item)
+      (cons item knil))
+  '(0)
+  '#(a b c))
+@result{} (c b a 0)
+@end lisp
+@end defun
+
+
+@defun string-fold-right @var{combine} @var{nil} @vari{string} @varii{string} @dots{} @varn{string}
+The @var{string}s must all have the same length.  @var{combine} must be a procedure; it must accept
+one more argument than there are @var{string}s and return a single value; @var{combine} must not
+mutate the @var{string} arguments.
+
+The @func{string-fold-right} procedure iterates the @var{combine} procedure over the elements of the
+@var{string}s from right to left and an accumulator value, starting with an accumulator value of
+@var{nil}; @var{combine} must have signature:
+
+@lisp
+(lambda (item0 item ... nil) . @meta{body})
+@end lisp
+
+More specifically, @func{string-fold-right} returns @var{nil} if the @var{string}s are empty.  If they are
+not empty, @var{combine} is first applied to the respective last elements of the @var{string}s in
+order and @var{nil}.  The result becomes the new accumulator value, and @var{combine} is applied to
+the respective previous elements of the @var{string}s and the new accumulator value.  This step is
+repeated until the beginning of the string is reached; then the accumulator value is returned.
+
+@var{proc} is always called in the same dynamic environment as @func{string-fold-right} itself.
+
+@lisp
+(string-fold-right
+    (lambda (item knil)
+      (cons item knil))
+  '(0)
+  '#(a b c))
+@result{} (a b c 0)
+@end lisp
+@end defun
+
+@c ------------------------------------------------------------------------
+
+@subsubheading Unsafe left--folding procedures
+
+
+@defun {$string-fold-left/1} @var{combine} @var{nil} @var{vec}
+Like @func{string-fold-left} for a single string argument, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-fold-left/2} @var{combine} @var{nil} @vari{vec} @varii{vec}
+Like @func{string-fold-left} for two string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-fold-left/3} @var{combine} @var{nil} @vari{vec} @varii{vec} @variii{vec}
+Like @func{string-fold-left} for three string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-fold-left/list} @var{combine} @var{nil} @var{list-of-strings}
+Like @func{string-fold-left} for any number string operands, but does not validate its arguments.
+All the string operands must be in the @var{list-of-strings}.
+
+@lisp
+($string-fold-left/list
+     (lambda (knil item1 item2 item3 item4)
+       (cons (list item1 item2 item3 item4) knil))
+   '(0)
+   '(#(a b c)
+     #(d e f)
+     #(g h i)
+     #(l m n)))
+@result{} ((c f i n) (b e h m) (a d g l) 0)
+@end lisp
+@end defun
+
+@c ------------------------------------------------------------------------
+
+@subsubheading Unsafe right--folding procedures
+
+
+@defun {$string-fold-right/1} @var{combine} @var{nil} @var{vec}
+Like @func{string-fold-right} for a single string argument, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-fold-right/2} @var{combine} @var{nil} @vari{vec} @varii{vec}
+Like @func{string-fold-right} for two string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-fold-right/3} @var{combine} @var{nil} @vari{vec} @varii{vec} @variii{vec}
+Like @func{string-fold-right} for three string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-fold-right/list} @var{combine} @var{nil} @var{list-of-strings}
+Like @func{string-fold-right} for any number string operands, but does not validate its arguments.
+All the string operands must be in the @var{list-of-strings}.
+
+@lisp
+($string-fold-right/list
+    (lambda (item1 item2 item3 item4 knil)
+      (cons (list item1 item2 item3 item4) knil))
+  '(0)
+  '(#(a b c)
+    #(d e f)
+    #(g h i)
+    #(l m n)))
+@result{} ((a d g l) (b e h m) (c f i n) 0)
+@end lisp
+@end defun
+
+@c page
+@node map
+@chapter Mapping strings
+
+
+@menu
+* map plain::                   Traditional strings mapping.
+* map index::                   Strings mapping with indexes.
+@end menu
+
+@c page
+@node map plain
+@section Traditional strings mapping
+
+
+@defun string-map @var{proc} @vari{string} @varii{string} @dots{}
+@defunx string-map-in-order @var{proc} @vari{string} @varii{string} @dots{}
+The @var{string}s must all have the same length.  @var{proc} must accept as many arguments as there
+are @var{string}s and return a single value.  @var{proc} must not mutate any of the @var{string}s.
+
+The syntactic binding @func{string-map-in-order} is an alias for @func{string-map}.
+
+The @func{string-map} procedure applies @var{proc} element--wise to the elements of the
+@var{string}s, left to right, and return a string of the results, in order.  @var{proc} is always
+called in the same dynamic environment as @func{string-map} itself.  If multiple returns occur from
+@func{string-map}, the values returned by earlier returns are not mutated.
+
+@lisp
+(string-map
+    (lambda (item)
+      (list item))
+  '#(a b c))
+@result{} #((a) (b) (c))
+
+(string-map
+    (lambda (item1 item2)
+      (list item1 item2))
+  '#(a b c)
+  '#(d e f))
+@result{} #((a d) (b e) (c f))
+@end lisp
+@end defun
+
+
+@defun string-for-each @var{proc} @vari{string} @varii{string} @dots{}
+@defunx string-for-each-in-order @var{proc} @vari{string} @varii{string} @dots{}
+The @var{string}s must all have the same length.  @var{proc} must accept as many arguments as there
+are @var{string}s.  @var{proc} must not mutate any of the @var{string}s.
+
+The syntactic binding @func{string-for-each-in-order} is an alias for @func{string-for-each}.
+
+The @func{string-for-each} procedure applies @var{proc} element--wise to the elements of the
+@var{string}s for its side effects, in order from the first elements to the last.  @var{proc} is
+always called in the same dynamic environment as @func{string-for-each} itself.  The return values
+of @func{string-for-each} are unspecified.
+
+@lisp
+(let ((v (make-string 5)))
+  (string-for-each
+      (lambda (i)
+        (string-set! v i (* i i)))
+    '#(0 1 2 3 4))
+  v)
+@result{} #(0 1 4 9 16)
+
+(string-for-each (lambda (x) x) '#(1 2 3 4))
+@result{} unspecified
+
+(string-for-each even? '#())
+@result{} unspecified
+@end lisp
+@end defun
+
+@c ------------------------------------------------------------------------
+
+@subsubheading Unsafe mapping procedures
+
+
+@defun {$string-map/1} @var{func} @var{ell}
+@defunx {$string-map-in-order/1} @var{func} @var{ell}
+Like @func{string-map} for a single string argument, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-map/2} @var{func} @vari{ell} @varii{ell}
+@defunx {$string-map-in-order/2} @var{func} @vari{ell} @varii{ell}
+Like @func{string-map} for two string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-map/3} @var{func} @vari{ell} @varii{ell} @variii{ell}
+@defunx {$string-map-in-order/3} @var{func} @vari{ell} @varii{ell} @variii{ell}
+Like @func{string-map} for three string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-map/list} @var{func} @var{list-of-strings}
+@defunx {$string-map-in-order/list} @var{func} @var{list-of-strings}
+Like @func{string-map} for any number string operands, but does not validate its arguments.  All the
+string operands must be in the @var{list-of-strings}.
+@end defun
+
+@c ------------------------------------------------------------------------
+
+@subsubheading Unsafe iteration procedures
+
+
+@defun {$string-for-each/1} @var{func} @var{ell}
+@defunx {$string-for-each-in-order/1} @var{func} @var{ell}
+Like @func{string-for-each} for a single string argument, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-for-each/2} @var{func} @vari{ell} @varii{ell}
+@defunx {$string-for-each-in-order/2} @var{func} @vari{ell} @varii{ell}
+Like @func{string-for-each} for two string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-for-each/3} @var{func} @vari{ell} @varii{ell} @variii{ell}
+@defunx {$string-for-each-in-order/3} @var{func} @vari{ell} @varii{ell} @variii{ell}
+Like @func{string-for-each} for three string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-for-each/list} @var{func} @var{list-of-strings}
+@defunx {$string-for-each-in-order/list} @var{func} @var{list-of-strings}
+Like @func{string-for-each} for any number string operands, but does not validate its arguments.
+All the string operands must be in the @var{list-of-strings}.
+@end defun
+
+@c page
+@node map index
+@section Strings mapping with indexes
+
+
+@defun string-map-index @var{proc} @vari{string} @varii{string} @dots{}
+The @var{string}s must all have the same length.  @var{proc} must accept as many arguments as there
+are @var{string}s plus one, and return a single value.  @var{proc} must not mutate any of the
+@var{string}s.
+
+The @func{string-map-index} procedure applies @var{proc} to a fixnum and, element--wise, to the
+elements of the @var{string}s, left to right, and return a string of the results, in order; the
+fixnum argument is the index of the current elements.  @var{proc} is always called in the same
+dynamic environment as @func{string-map-index} itself.  If multiple returns occur from
+@func{string-map-index}, the values returned by earlier returns are not mutated.
+
+@lisp
+(string-map-index
+    (lambda (idx item)
+      (list idx item))
+  '#(a b c))
+@result{} #((0 a) (1 b) (2 c))
+
+(string-map-index
+    (lambda (idx item1 item2)
+      (list idx item1 item2))
+  '#(a b c)
+  '#(d e f))
+@result{} #((0 a d) (1 b e) (2 c f))
+@end lisp
+@end defun
+
+
+@defun string-for-each-index @var{proc} @vari{string} @varii{string} @dots{}
+The @var{string}s must all have the same length.  @var{proc} must accept as many arguments as there
+are @var{string}s plus one.  @var{proc} must not mutate any of the @var{string}s.
+
+The @func{string-for-each-index} procedure applies @var{proc} to a fixnum and, element--wise, to the
+elements of the @var{string}s for its side effects, in order from the first elements to the last;
+the fixnum argument is the index of the current elements.  @var{proc} is always called in the same
+dynamic environment as @func{string-for-each-index} itself.  The return values of
+@func{string-for-each-index} are unspecified.
+
+@lisp
+(let ((v (make-string 5)))
+  (string-for-each-index
+      (lambda (idx item)
+        (string-set! v i (list idx item)))
+    '#(a b c d))
+  v)
+@result{} #((0 a) (1 b) (2 c) (3 d))
+@end lisp
+@end defun
+
+@c ------------------------------------------------------------------------
+
+@subsubheading Unsafe mapping procedures
+
+
+@defun {$string-map-index/1} @var{func} @var{ell}
+Like @func{string-map-index} for a single string argument, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-map-index/2} @var{func} @vari{ell} @varii{ell}
+Like @func{string-map-index} for two string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-map-index/3} @var{func} @vari{ell} @varii{ell} @variii{ell}
+Like @func{string-map-index} for three string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-map-index/list} @var{func} @var{list-of-strings}
+Like @func{string-map-index} for any number string operands, but does not validate its arguments.
+All the string operands must be in the @var{list-of-strings}.
+@end defun
+
+@c ------------------------------------------------------------------------
+
+@subsubheading Unsafe iteration procedures
+
+
+@defun {$string-for-each-index/1} @var{func} @var{ell}
+Like @func{string-for-each-index} for a single string argument, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-for-each-index/2} @var{func} @vari{ell} @varii{ell}
+Like @func{string-for-each-index} for two string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-for-each-index/3} @var{func} @vari{ell} @varii{ell} @variii{ell}
+Like @func{string-for-each-index} for three string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-for-each-index/list} @var{func} @var{list-of-strings}
+Like @func{string-for-each-index} for any number string operands, but does not validate its
+arguments.  All the string operands must be in the @var{list-of-strings}.
+@end defun
+
+@c page
+@node search
+@chapter Searching strings
+
+
+@defun string-find @var{proc} @var{string}
+@var{proc} must accept one argument and return a single value.  @var{proc} must not mutate
+@var{string}.  The @func{string-find} procedure applies @var{proc} to the elements of @var{string}
+in order.  If @var{proc} returns a true value for an element, @func{string-find} immediately returns
+that element.  If @var{proc} returns @false{} for all elements of the string, @func{string-find}
+returns @false{}.  @var{proc} is always called in the same dynamic environment as @func{string-find}
+itself.
+
+@lisp
+(string-find even? '#(3 1 4 1 5 9))
+@result{} 4
+
+(string-find even? '#(3 1 5 1 5 9))
+@result{} #f
+@end lisp
+@end defun
+
+
+@defun string-for-all @var{proc} @vari{string} @varii{string} @dots{} @varn{string}
+The @var{string}s must all have the same length, and @var{proc} must accept @math{n} arguments and
+return a single value.  @var{proc} must not mutate the @var{string} arguments.
+
+For natural numbers @math{i = 0, 1, @dots{}}, the @func{string-for-all} procedure successively
+applies @var{proc} to arguments @math{x_i^1 @dots{} x_i^n}, where @math{x_i^j} is the @math{i}-th
+element of @varj{string}, until @false{} is returned.
+
+If @var{proc} returns true values for all but the last elements of the @var{string} arguments:
+@func{string-for-all} performs a tail call of @var{proc} on the elements @math{k-1}, where @math{k}
+is the length of the strings.  If @var{proc} returns @false{} on any set of elements,
+@func{string-for-all} returns @false{} after the first such application of @var{proc}.  If the
+@var{string}s are all empty, @func{string-for-all} returns @true{}.
+
+@var{proc} is always called in the same dynamic environment as @func{string-for-all} itself.
+
+@lisp
+(string-for-all even? '#(3 1 4 1 5 9))
+@result{} #f
+
+(string-for-all even? '#(2 4 14))
+@result{} #t
+
+(string-for-all
+    (lambda (n)
+      (and (even? n) n))
+  '#(2 4 14))
+@result{} 14
+
+(string-for-all < '#(1 2 3) '#(2 3 4))
+@result{} #t
+
+(string-for-all < '#(1 2 4) '#(2 3 4))
+@result{} #f
+@end lisp
+@end defun
+
+
+@defun string-exists @var{proc} @vari{string} @varii{string} @dots{} @varn{string}
+The @var{string}s must all have the same length, and @var{proc} must accept @math{n} arguments and
+return a single value.  @var{proc} must not mutate the @var{string} arguments.
+
+For natural numbers @math{i = 0, 1, @dots{}}, the @func{string-exists} procedure applies @var{proc}
+successively to arguments @math{x_i^1 @dots{} x_i^n}, where @math{x_i^j} is the @math{i}-th element
+of @varj{string}, until a true value is returned.
+
+If @var{proc} returns @false{} for all but the last elements of the @var{string} arguments,
+@func{string-exists} performs a tail call of @var{proc} on the elements @math{k-1}, where @math{k}
+is the length of the strings.  If @var{proc} returns a true value on any set of elements,
+@func{string-exists} returns that value after the first such application of @var{proc}.  If the
+@var{string}s are all empty, @func{string-exists} returns @false{}.
+
+@var{proc} is always called in the same dynamic environment as @func{string-exists} itself.
+
+@lisp
+(string-exists even? '#(3 1 4 1 5 9))
+@result{} #t
+
+(string-exists even? '#(3 1 1 5 9))
+@result{} #f
+
+(string-exists
+    (lambda (n)
+      (and (even? n) n))
+  '#(2 1 4 14))
+@result{} 2
+
+(string-exists < '#(1 2 4) '#(2 3 4))
+@result{} #t
+
+(string-exists > '#(1 2 3) '#(2 3 4))
+@result{} #f
+@end lisp
+@end defun
+
+@c ------------------------------------------------------------------------
+
+@subsubheading Unsafe finding
+
+
+@defun {$string-find} @var{pred} @var{vec}
+Like @func{string-find}, but does not validate its arguments.
+@end defun
+
+@c ------------------------------------------------------------------------
+
+@subsubheading Unsafe searching ``for all'' procedures
+
+
+@defun {$string-for-all/1} @var{pred} @var{vec}
+Like @func{string-for-all} for a single string argument, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-for-all/2} @var{pred} @vari{vec} @varii{vec}
+Like @func{string-for-all} for two string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-for-all/3} @var{pred} @vari{vec} @varii{vec} @variii{vec}
+Like @func{string-for-all} for three string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-for-all/list} @var{pred} @var{list-of-strings}
+Like @func{string-for-all} for any number string operands, but does not validate its arguments.  All
+the string operands must be in the @var{list-of-strings}.
+@end defun
+
+@c ------------------------------------------------------------------------
+
+@subsubheading Unsafe searching ``exists'' procedures
+
+
+@defun {$string-exists/1} @var{pred} @var{vec}
+Like @func{string-exists} for a single string argument, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-exists/2} @var{pred} @vari{vec} @varii{vec}
+Like @func{string-exists} for two string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-exists/3} @var{pred} @vari{vec} @varii{vec} @variii{vec}
+Like @func{string-exists} for three string arguments, but does not validate its arguments.
+@end defun
+
+
+@defun {$string-exists/list} @var{pred} @var{list-of-strings}
+Like @func{string-exists} for any number string operands, but does not validate its arguments.  All
+the string operands must be in the @var{list-of-strings}.
+@end defun
+
+@c page
+@node copy
+@chapter Copying strings
+
+
+@defun string-copy @var{dst.vec} @var{dst.start} @var{src.vec} @var{src.start} @var{src.end}
+Copy elements from the string @var{src.vec} to the string @var{dst.vec}; return @var{dst.vec}
+itself.  The elements of @var{src.vec} from index @var{src.start} (included) to index @var{src.end}
+(excluded) are copied into @var{dst.vec} starting at index @var{dst.start}.
+
+@lisp
+(let ((src.vec    '#(a b c d e))
+      (dst.vec    (make-string 5 #f)))
+  (string-copy dst.vec 0
+               src.vec 0 (string-length src.vec)))
+@result{} #(a b c d e)
+
+(let ((src.vec    '#(a b c d e))
+      (dst.vec    (make-string 5 #f)))
+  (string-copy dst.vec 0
+               src.vec 3 3))
+@result{} #(#f #f #f #f #f)
+
+(let ((src.vec    '#(a b c d e))
+      (dst.vec    (make-string 5 #f)))
+  (string-copy dst.vec 1
+               src.vec 1 4))
+@result{} #(#f b c d #f)
+@end lisp
+@end defun
+
+
+@defun $string-copy @var{dst.vec} @var{dst.start} @var{src.vec} @var{src.start} @var{src.end}
+Like @func{string-copy}, but it does not validate its arguments.
+@end defun
+
+@c page
+@node sort
+@chapter Sorted strings
+
+
+@defun sorted-string-binary-search @var{item<} @var{vec} @var{sought}
+Return @false{} or a non--negative fixnum representing the index at which @var{sought} is present in
+the sorted string @var{vec}.  The procedure @var{item<} is used to compare the items from @var{vec}
+and the object @var{sought}.
+
+@lisp
+(sorted-string-binary-search < '#(0 1 2 3 4 5 6 7 8 9) 3)
+@result{} 3
+
+(sorted-string-binary-search < '#(0 1 2 3 4 5 6 7 8 9) 999)
+@result{} #f
+
+(sorted-string-binary-search symbol<?
+   '#(a b c d e f g h i l m) 'd)
+@result{} 3
+@end lisp
+@end defun
+
+@c page
+@node conditions
+@chapter Exceptional--condition object--types
+
+
+@menu
+* conditions is empty::         Exceptional condition: @condition{string-is-empty}.
+* conditions diff len::         Exceptional condition: @condition{strings-are-of-different-length}.
+* conditions empty len::        Exceptional condition: @condition{strings-are-empty-or-of-different-length}.
+@end menu
+
+@c page
+@node conditions is empty
+@section Exceptional condition: @condition{string-is-empty}
+
+
+@deftp {Condition Object} @acondition{string-is-empty}
+Exceptional--condition object--type representing an invalid empty string operand: a non--empty proper
+string was expected.
+@end deftp
+
+
+@defun make-string-is-empty-condition
+Build and return a new exceptional--condition object of type @condition{string-is-empty}.
+@end defun
+
+
+@defun condition-string-is-empty? @var{obj}
+Return @true{} if @var{obj} is an exceptional--condition object of type @condition{string-is-empty} or
+a compound condition object having a component of type @condition{string-is-empty}; otherwise return
+@false{}.
+@end defun
+
+
+@defun raise-exception-string-is-empty @var{who} @var{obj}
+Raise a non--continuable exception with compound condition object having components:
+@condition{string-is-empty}; @condition{who}; @condition{message}; @condition{irritants}.
+@end defun
+
+@c page
+@node conditions diff len
+@section Exceptional condition: @condition{strings-are-of-different-length}
+
+
+@deftp {Condition Object} @acondition{strings-are-of-different-length}
+Exceptional--condition object--type representing invalid string operands: a proper strings with the same
+length were expected.
+@end deftp
+
+
+@defun make-strings-are-of-different-length-condition
+Build and return a new exceptional--condition object of type
+@condition{strings-are-of-different-length}.
+@end defun
+
+
+@defun condition-strings-are-of-different-length? @var{obj}
+Return @true{} if @var{obj} is an exceptional--condition object of type
+@condition{strings-are-of-different-length} or a compound condition object having a component of type
+@condition{strings-are-of-different-length}; otherwise return @false{}.
+@end defun
+
+
+@defun raise-exception-strings-are-of-different-length @var{who} @var{obj}
+Raise a non--continuable exception with compound condition object having components:
+@condition{strings-are-of-different-length}; @condition{who}; @condition{message};
+@condition{irritants}.
+@end defun
+
+@c page
+@node conditions empty len
+@section Exceptional condition: @condition{strings-are-empty-or-of-different-length}
+
+
+@deftp {Condition Object} @acondition{strings-are-empty-or-of-different-length}
+Exceptional--condition object--type representing invalid string operands: a proper strings with the same
+length were expected.
+@end deftp
+
+
+@defun make-strings-are-empty-or-of-different-length-condition
+Build and return a new exceptional--condition object of type
+@condition{strings-are-empty-or-of-different-length}.
+@end defun
+
+
+@defun condition-strings-are-empty-or-of-different-length? @var{obj}
+Return @true{} if @var{obj} is an exceptional--condition object of type
+@condition{strings-are-empty-or-of-different-length} or a compound condition object having a component of type
+@condition{strings-are-empty-or-of-different-length}; otherwise return @false{}.
+@end defun
+
+
+@defun raise-exception-strings-are-empty-or-of-different-length @var{who} @var{obj}
+Raise a non--continuable exception with compound condition object having components:
+@condition{strings-are-empty-or-of-different-length}; @condition{who}; @condition{message};
+@condition{irritants}.
+@end defun
+
+@c page
+@c ------------------------------------------------------------
+@c Appendices.
+@c ------------------------------------------------------------
+
+@include lgpl-3.0.texi
+@include fdl-1.3.texi
+
+@c page
+@node references
+@appendix Bibliography and references
+
+
+The documentation of @value{PACKAGE} is available online:
+
+@center @value{DocumentationUrl}
+
+@noindent
+the latest release of this package can be downloaded from:
+
+@center @value{DownloadUrl}
+
+@noindent
+development takes place at:
+
+@center @value{GithubUrl}
+
+@noindent
+and as backup at:
+
+@center @value{BitbucketUrl}
+
+@noindent
+@chicken{} can be downloaded from:
+
+@center @url{http://www.call-cc.org/}
+
+@noindent
+the package @mmck{} Lang is available from:
+
+@center @url{https://github.com/marcomaggi/mmck-lang/}
+
+@noindent
+the package @mmck{} Exceptional Conditions is available from:
+
+@center @url{https://github.com/marcomaggi/mmck-exceptional-conditions/}
+
+@noindent
+the package @mmck{} Checks is available from:
+
+@center @url{https://github.com/marcomaggi/mmck-checks/}
+
+@c page
+@node concept index
+@appendix An entry for each concept
+
+@printindex cp
+
+@node function index
+@appendix An entry for each function
+
+@printindex fn
+
+@node variable index
+@appendix An entry for each variable
+
+@printindex vr
+
+@node type index
+@appendix An entry for each type
+
+@printindex tp
+
+@contents
+@bye
+
+@c end of file
+@c Local Variables:
+@c ispell-local-dictionary: "en_GB-ise-w_accents"
+@c end:
